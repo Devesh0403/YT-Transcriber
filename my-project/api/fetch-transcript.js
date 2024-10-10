@@ -39,21 +39,59 @@
 //     console.log(`Server is running on http://localhost:${PORT}`);
 // });
 
+// import { YoutubeTranscript } from 'youtube-transcript';
+// import ytdl from 'ytdl-core';
+
+// export default async function handler(req, res) {
+//   const { videoId } = req.query;
+
+//   if (req.method === 'GET') {
+//     try {
+//       const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+//       res.status(200).json(transcript);
+//     } catch (error) {
+//       res.status(500).json({ error: error.message });
+//     }
+//   } else {
+//     res.status(405).json({ message: 'Method Not Allowed' });
+//   }
+// }
+
+
 import { YoutubeTranscript } from 'youtube-transcript';
-import ytdl from 'ytdl-core';
+import Cors from 'cors';
+
+// Initialize CORS middleware
+const cors = Cors({
+  methods: ['GET', 'HEAD'],
+});
+
+// Helper method to run middleware
+function runMiddleware(req, res, fn) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+}
 
 export default async function handler(req, res) {
-  const { videoId } = req.query;
+  // Run the CORS middleware
+  await runMiddleware(req, res, cors);
 
-  if (req.method === 'GET') {
-    try {
-      const transcript = await YoutubeTranscript.fetchTranscript(videoId);
-      res.status(200).json(transcript);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  } else {
-    res.status(405).json({ message: 'Method Not Allowed' });
+  const { videoId } = req.query;
+  if (!videoId) {
+    return res.status(400).json({ error: 'Missing videoId parameter' });
+  }
+
+  try {
+    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+    return res.status(200).json(transcript);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 }
 
