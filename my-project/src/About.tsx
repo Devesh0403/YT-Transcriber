@@ -130,7 +130,7 @@ const About = () => {
 
             {/* Main Content */}
             <div className="relative z-10 w-[80%] m-auto">
-                <Typewriter text=" How to use?" typingSpeed={200} />
+                <Typewriter text="  How to use?" typingSpeed={200} />
 
                 {/* Instructions */}
                 <div className="mt-8 m-auto flex flex-col   lg:flex-row justify-center gap-[3rem]">
