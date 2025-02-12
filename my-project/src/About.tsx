@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '/src/components/Navbar.tsx';
+import Navbar from '/src/Navbar.tsx';
 
 
 const Typewriter = ({ text, typingSpeed = 100 }) => {

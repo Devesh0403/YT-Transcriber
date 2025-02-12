@@ -35,7 +35,7 @@ const Navbar=()=>{
 
             {/* <Link to="/about" className=" p-4  bg-white rounded-full  hover:text-blue-400">About</Link> */}
             <Link to="/about" className=" p-4 bg-white rounded-full  hover:text-blue-400">About</Link>
-            <Link to="/register" className="p-4 bg-white t   rounded-full hover:text-blue-400">Register</Link>
+            <Link to="/register" className="p-4 bg-white   rounded-full hover:text-blue-400">Register</Link>
             </div>
             ):(
             <div className="bg-white rounded-2xl  p-2 ">

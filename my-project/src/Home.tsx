@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "/src/components/Navbar.tsx";
-
-import axios from "axios";
+import Navbar from "/src/Navbar.tsx";
+import { fetchFromAPI } from "./utils/fetchFromAPI"; // Ensure fetchFromAPI is correctly imported
 import translate from "translate";
-
 import { MdDownload } from "react-icons/md";
 import { LuCopy } from "react-icons/lu";
 import { FaChevronDown } from "react-icons/fa";
 
 const Home: React.FC = () => {
   const [videoId, setVideoId] = useState<string>("");
-  const [extractedId,setExtractedId]=useState('');
+  const [extractedId, setExtractedId] = useState<string>("");
 
   const [transcript, setTranscript] = useState<any[]>([]);
-  const[transcriptCopy,setTranscriptCopy]=useState<any[]>([]);
+  const [transcriptCopy, setTranscriptCopy] = useState<any[]>([]);
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -68,17 +66,13 @@ const Home: React.FC = () => {
     { id: 43, link: "https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700648/latenights_xjsgql.gif" },
     { id: 44, link: "https://res.cloudinary.com/dqgrwjod2/image/upload/v1727713060/Megalo_Box_furdhn.gif" },
     { id: 45, link: "https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700634/happy_life_GIF_-_Find_Share_on_GIPHY_hvx4ko.gif" },
-    {id:46,link:"https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700629/a4l8vys2griy_gif_960_540_jtfj56.gif"},
-    {id:47,link:"https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700619/7he_R4_q8rwhz.gif"},
-    {id:48,link:"https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700618/__mmkarv.gif"},
-    {id:49,link:"https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700617/__2_kezjoi.gif"},
-    {id:50,link:"https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700613/__1_m0dj2l.gif"}
-    
-  
-  
+    { id: 46, link: "https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700629/a4l8vys2griy_gif_960_540_jtfj56.gif" },
+    { id: 47, link: "https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700619/7he_R4_q8rwhz.gif" },
+    { id: 48, link: "https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700618/__mmkarv.gif" },
+    { id: 49, link: "https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700617/__2_kezjoi.gif" },
+    { id: 50, link: "https://res.cloudinary.com/dqgrwjod2/image/upload/v1727700613/__1_m0dj2l.gif" }
   ];
 
-  
   const changeBackgroundImage = () => {
     setBackgroundImage(backgroundImages[Math.floor(Math.random() * 50)].link);
   };
@@ -92,9 +86,11 @@ const Home: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const downloadTranscript = (transcript) => {
+  const downloadTranscript = (transcript: any) => {
     const formattedData = transcriptCopy.map(item => 
-      ` ${Math.floor(item.offset / 3600) < 10 ? '0' + Math.floor(item.offset / 3600) : Math.floor(item.offset / 3600)}:${Math.floor((item.offset % 3600) / 60) < 10 ? '0' + Math.floor((item.offset % 3600) / 60) : Math.floor((item.offset % 3600) / 60)}:${Math.floor(item.offset % 60) < 10 ? '0' + Math.floor(item.offset % 60) : Math.floor(item.offset % 60)}-- ${item.text}`
+      `${Math.floor(item.offset / 3600) < 10 ? '0' + Math.floor(item.offset / 3600) : Math.floor(item.offset / 3600)}:` +
+      `${Math.floor((item.offset % 3600) / 60) < 10 ? '0' + Math.floor((item.offset % 3600) / 60) : Math.floor((item.offset % 3600) / 60)}:` +
+      `${Math.floor(item.offset % 60) < 10 ? '0' + Math.floor(item.offset % 60) : Math.floor(item.offset % 60)} -- ${item.text}`
     ).join('\n');
     const blob = new Blob([formattedData], { type: 'text/plain' });
     const link = document.createElement('a');
@@ -108,85 +104,55 @@ const Home: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    const urlPattern = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^&\n]{11})/;
-    const match = videoId.match(urlPattern);
-    setExtractedId(match ? match[1] : videoId);
-
     try {
-      const response = await fetch(`https://scriptifyy.vercel.app/api/fetch-transcript?videoId=${extractedId}`)
-      if (!response.ok) throw new Error('Network response was not ok');
-      let transcriptData = await response.json();
+      const data = await fetchFromAPI("transcript", { video_id: videoId, lang: "en" });
+      console.log(data); // Log the response for debugging
 
-      
+      if (!data || !data[0] || !data[0].transcription) {
+        throw new Error("No transcript data available.");
+      }
 
-      
-
+      const transcriptData = data[0].transcription;
       setTranscript(transcriptData);
-      // console.log(formattedData)
       setTranscriptCopy(transcriptData);
 
-
-      
-      
     } catch (error) {
-      // console.error('Error fetching transcript:', error.message);
       setError("Error fetching transcript. Please check the video ID and try again.");
     } finally {
-      // handleTranslate();
       setLoading(false);
-      setError(null)
     }
   };
-
-  function downloadTrans(){
-    downloadTranscript(JSON.stringify(transcript));
-  }
-
-  interface TranscriptLine {
-    text: string;
-    offset: number;
-  }
+  
 
   const handleTranslate = async () => {
-    let translatedText: TranscriptLine[] = [];
-  
+    let translatedText: any[] = [];
+
     try {
-      // Use Promise.all to handle translations concurrently
       translatedText = await Promise.all(
         transcript.map(async (line) => {
-          const translatedText = await translate(line.text, { to: targetLanguage });
-          return {
-            text: translatedText,
-            offset: line.offset,
-          };
+          const translated = await translate(line.text, { to: targetLanguage });
+          return { text: translated, offset: line.offset };
         })
       );
-  
-      
-      setTranscriptCopy(translatedText)
+      setTranscriptCopy(translatedText);
     } catch (error) {
       console.error("Translation Error:", error);
     }
   };
 
   useEffect(() => {
-    if (transcriptCopy) {
+    if (transcriptCopy.length > 0) {
       handleTranslate();
     }
   }, [targetLanguage]);
-  
 
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(transcript))
-      .then(() => {
-        alert('Copied to clipboard!'); // Feedback to the user (can be improved)
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-      });
+      .then(() => alert('Copied to clipboard!'))
+      .catch(err => console.error('Failed to copy: ', err));
   };
 
-  const handleLanguageChange = (e) => {
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setTargetLanguage(e.target.value);
   };
 
@@ -200,7 +166,7 @@ const Home: React.FC = () => {
         <Navbar />
       </div>
 
-      <div className="relative flex flex-col items-center mx-auto md:flex-row md:items-center justify-center  mt-[2rem] lg:mt-[4rem] m-auto">
+      <div className="relative flex flex-col items-center mx-auto md:flex-row md:items-center justify-center mt-[2rem] lg:mt-[4rem] m-auto">
         <input
           type="text"
           placeholder="Enter YouTube video URL or ID"
@@ -209,96 +175,79 @@ const Home: React.FC = () => {
           className="border min-w-[400px] rounded-full w-[40vw] px-4 py-2 focus:outline-none focus:border-blue-500"
         />
         <div className="flex-row gap-[4rem] mt-[2rem] md:ml-4 md:m-0">
-
           <button
             onClick={() => fetchTranscript(videoId)}
             className="px-6 py-2 rounded-full bg-white font-lines hover:text-blue-400 transition-colors"
           >
             Get Transcript
           </button>
-         
-          <div className="ml-4 px-6 py-2 pr-10 font-lines relative inline-block text-center bg-white rounded-full  hover:text-blue-400">
-          <select
-            className="  appearance-none transition-colors block w-full focus:outline-none focus:ring-0"
-            value={targetLanguage}
-            onChange={handleLanguageChange}
-          >
-            <option value="en">English</option>
-            <option value="it">Italian</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="es">Spanish</option>
-            <option value="hi">Hindi</option>
-            <option value="zh">Chinese</option>
-            <option value="ja">Japanese</option>
-            <option value="ru">Russian</option>
-          </select>
-          <FaChevronDown className="absolute inset-y-0 right-5 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" />
-          {/* Custom icon positioned absolutely */}
+
+          <div className="ml-4 px-6 py-2 pr-10 font-lines relative inline-block text-center bg-white rounded-full hover:text-blue-400">
+            <select
+              className="appearance-none transition-colors block w-full focus:outline-none focus:ring-0"
+              value={targetLanguage}
+              onChange={handleLanguageChange}
+            >
+              <option value="en">English</option>
+              <option value="it">Italian</option>
+              <option value="fr">French</option>
+              <option value="de">German</option>
+              <option value="es">Spanish</option>
+              <option value="hi">Hindi</option>
+              <option value="zh">Chinese</option>
+              <option value="ja">Japanese</option>
+              <option value="ru">Russian</option>
+            </select>
+            <FaChevronDown className="absolute inset-y-0 right-5 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" />
           </div>
-
-
         </div>
       </div>
 
       <div className="relative w-[80%] m-auto text-center mb-12">
-     {loading && <div className="font-lines text-2xl">Loading...</div>}
-     {error && <p className="text-red-500">{error}</p>}
-  {transcriptCopy.length > 0 && (
-    <div className="flex md:flex-row mt-[3rem] md:gap-[4rem] flex-col gap-[4rem]">
-      
-      {/* YouTube iframe */}
-      <iframe  
-        className="md:block hidden"
-        width="560" 
-        height="315" 
-        src={`https://www.youtube.com/embed/${extractedId}`} 
-        title="YouTube video player" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-        allowFullScreen
-      ></iframe>
-      
-      {/* Transcript Section */}
-      <div className=" w-[50%] min-w-[300px] text-left h-[315px] overflow-y-auto m-auto p-0 bg-white border border-gray-300 rounded-lg ">
-        {/* Fixed Navbar */}
-        <div className=" sticky top-0  z-10 border-b border-gray-300 bg-white p-4 overflow-hidden">
-          <div className="flex justify-between items-center">
-            <div className="font-bold text-2xl">Transcript</div>
-            <div className="flex flex-row gap-[1rem] ">
+        {loading && <div className="font-lines text-2xl">Loading...</div>}
+        {error && <p className="text-red-500">{error}</p>}
+        {transcriptCopy.length > 0 && (
+          <div className="flex md:flex-row mt-[3rem] md:gap-[4rem] flex-col gap-[4rem]">
+            <iframe
+              className="md:block hidden"
+              width="560"
+              height="315"
+              src={`https://www.youtube.com/embed/${extractedId}`}
+              title="YouTube video player"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
 
-            <button className="text-blue-500 font-bold text-2xl border rounded-xl p-2" onClick={downloadTrans}>
-            <MdDownload />
+            <div className="w-[50%] min-w-[300px] text-left h-[315px] overflow-y-auto m-auto p-0 bg-white border border-gray-300 rounded-lg">
+              <div className="sticky top-0 z-10 border-b border-gray-300 bg-white p-4">
+                <div className="flex justify-between items-center">
+                  <div className="font-bold text-2xl">Transcript</div>
+                  <div className="flex flex-row gap-[1rem]">
+                    <button className="text-blue-500 font-bold text-2xl border rounded-xl p-2" onClick={downloadTranscript}>
+                      <MdDownload />
+                    </button>
+                    <button className="text-blue-500 font-bold text-xl border rounded-xl p-3" onClick={handleCopy}>
+                      <LuCopy />
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-            </button>
-            <button className="text-blue-500 font-bold text-xl border rounded-xl p-3 " onClick={handleCopy} >
-              <LuCopy />
-            </button>
+              <div className="pt-0 p-4">
+                {transcriptCopy.map((line, index) => (
+                  <p key={index} className="text-xl p-2">
+                    {Math.floor(line.offset / 3600) < 10 ? '0' + Math.floor(line.offset / 3600) : Math.floor(line.offset / 3600)}:
+                    {Math.floor((line.offset % 3600) / 60) < 10 ? '0' + Math.floor((line.offset % 3600) / 60) : Math.floor((line.offset % 3600) / 60)}:
+                    {Math.floor(line.offset % 60) < 10 ? '0' + Math.floor(line.offset % 60) : Math.floor(line.offset % 60)}
+                    - {(line.text).replace(/&amp;#39;/g, "'")}
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Content with top padding */}
-        <div className=" pt-0 p-4"> {/* Adjust padding to match navbar height */}
-          {transcriptCopy.map((line, index) => (
-            <p key={index} className="text-xl p-2 ">
-              {Math.floor(line.offset / 3600) < 10 ? '0' + Math.floor(line.offset / 3600) : Math.floor(line.offset / 3600)}:
-              {Math.floor((line.offset % 3600) / 60) < 10 ? '0' + Math.floor((line.offset % 3600) / 60) : Math.floor((line.offset % 3600) / 60)}:
-              {Math.floor(line.offset % 60) < 10 ? '0' + Math.floor(line.offset % 60) : Math.floor(line.offset % 60)} 
-              - {(line.text).replace(/&amp;#39;/g, "'")}
-            </p>
-          ))}
-        </div>
+        )}
       </div>
-      
     </div>
-  )}
-</div>
-
-</div>
-
-
-
-      
   );
 };
 
